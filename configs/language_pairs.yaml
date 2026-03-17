@@ -1,0 +1,193 @@
+# IWSLT 2026 Low-Resource ST — Language Pair Configuration
+# All 10 language pairs with data sources and model language codes
+
+language_pairs:
+  arn-spa:
+    name: "Mapuzugun to Spanish"
+    src_lang: "arn"
+    tgt_lang: "spa"
+    src_name: "Mapuzugun"
+    tgt_name: "Spanish"
+    data_hours: 130
+    data_source: "huggingface"
+    hf_dataset: "mengct00/Mapudungun_iwslt26"
+    github_url: null
+    whisper_lang: null  # Not in Whisper — ASR-only via fine-tuning
+    seamless_src_lang: "arn"  # May need fallback
+    seamless_tgt_lang: "spa"
+    nllb_src_lang: null  # Not in NLLB — rely on E2E or fine-tune with placeholder
+    nllb_tgt_lang: "spa_Latn"
+    whisper_can_translate: false  # Whisper only does X→eng
+    notes: "Language isolate. Not in NLLB — use E2E SeamlessM4T or fine-tune NLLB with available parallel text"
+
+  bem-eng:
+    name: "Bemba to English"
+    src_lang: "bem"
+    tgt_lang: "eng"
+    src_name: "Bemba"
+    tgt_name: "English"
+    data_hours: 180
+    data_source: "github"
+    hf_dataset: null
+    github_url: "https://github.com/csikasote/bigc"
+    extra_data:
+      - name: "BembaSpeech"
+        url: "https://github.com/csikasote/BembaSpeech"
+        type: "asr"
+      - name: "ZambeziVoice"
+        url: "https://github.com/unza-speech-lab/zambezi-voice"
+        type: "asr"
+    whisper_lang: null  # Not natively in Whisper
+    seamless_src_lang: "bem"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "bem_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false
+
+  bho-hin:
+    name: "Bhojpuri to Hindi"
+    src_lang: "bho"
+    tgt_lang: "hin"
+    src_name: "Bhojpuri"
+    tgt_name: "Hindi"
+    data_hours: 26
+    data_source: "github"
+    hf_dataset: null
+    github_url: "https://github.com/shashwatup9k/iwslt2026_bho-hi"
+    extra_data:
+      - name: "ULCA-asr"
+        url: "https://github.com/Open-Speech-EkStep/ULCA-asr-dataset-corpus"
+        type: "asr"
+      - name: "BHLTR"
+        url: "https://github.com/shashwatup9k/bho-resources"
+        type: "text"
+    whisper_lang: null
+    seamless_src_lang: "bho"
+    seamless_tgt_lang: "hin"
+    nllb_src_lang: "bho_Deva"
+    nllb_tgt_lang: "hin_Deva"
+    whisper_can_translate: false
+    pseudo_translation: true  # Bhojpuri is close to Hindi — use pseudo-translation trick
+
+  ckb-eng:
+    name: "Central Kurdish to English"
+    src_lang: "ckb"
+    tgt_lang: "eng"
+    src_name: "Central Kurdish"
+    tgt_name: "English"
+    data_hours: 30
+    data_source: "web"
+    hf_dataset: null
+    github_url: null
+    download_url: "https://lium.univ-lemans.fr/en/corpus-commute-kurdish/"
+    whisper_lang: null
+    seamless_src_lang: "ckb"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "ckb_Arab"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false
+
+  gle-eng:
+    name: "Irish to English"
+    src_lang: "gle"
+    tgt_lang: "eng"
+    src_name: "Irish"
+    tgt_name: "English"
+    data_hours: 25
+    data_source: "github"
+    hf_dataset: null
+    github_url: "https://github.com/shashwatup9k/iwslt2026_ga-eng"
+    whisper_lang: null  # Not in Whisper v3
+    seamless_src_lang: "gle"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "gle_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false
+
+  ibo-eng:
+    name: "Igbo to English"
+    src_lang: "ibo"
+    tgt_lang: "eng"
+    src_name: "Igbo"
+    tgt_name: "English"
+    data_hours: 20
+    data_source: "huggingface"
+    hf_dataset: "McGill-NLP/african_celtic_dataset"
+    hf_subset: "igbo"
+    github_url: null
+    whisper_lang: "ig"
+    seamless_src_lang: "ibo"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "ibo_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false
+
+  hau-eng:
+    name: "Hausa to English"
+    src_lang: "hau"
+    tgt_lang: "eng"
+    src_name: "Hausa"
+    tgt_name: "English"
+    data_hours: 20
+    data_source: "huggingface"
+    hf_dataset: "McGill-NLP/african_celtic_dataset"
+    hf_subset: "hausa"
+    github_url: null
+    whisper_lang: "ha"
+    seamless_src_lang: "hau"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "hau_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false
+
+  que-spa:
+    name: "Quechua to Spanish"
+    src_lang: "que"
+    tgt_lang: "spa"
+    src_name: "Quechua"
+    tgt_name: "Spanish"
+    data_hours: 58
+    data_source: "github"
+    hf_dataset: null
+    github_url: "https://github.com/johneortega/IWSLT2026_Quechua_data"
+    whisper_lang: null
+    seamless_src_lang: "quy"
+    seamless_tgt_lang: "spa"
+    nllb_src_lang: "quy_Latn"
+    nllb_tgt_lang: "spa_Latn"
+    whisper_can_translate: false
+
+  ca-en:
+    name: "Catalan to English"
+    src_lang: "cat"
+    tgt_lang: "eng"
+    src_name: "Catalan"
+    tgt_name: "English"
+    data_hours: 30
+    data_source: "github"
+    hf_dataset: null
+    github_url: "https://github.com/rjzevallos/IWSLT_2026_Catalan_Dataset"
+    whisper_lang: "ca"
+    seamless_src_lang: "cat"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "cat_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: true  # Catalan is in Whisper
+
+  yor-eng:
+    name: "Yoruba to English"
+    src_lang: "yor"
+    tgt_lang: "eng"
+    src_name: "Yoruba"
+    tgt_name: "English"
+    data_hours: 20
+    data_source: "huggingface"
+    hf_dataset: "McGill-NLP/african_celtic_dataset"
+    hf_subset: "yoruba"
+    github_url: null
+    whisper_lang: "yo"
+    seamless_src_lang: "yor"
+    seamless_tgt_lang: "eng"
+    nllb_src_lang: "yor_Latn"
+    nllb_tgt_lang: "eng_Latn"
+    whisper_can_translate: false

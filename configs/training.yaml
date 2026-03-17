@@ -1,0 +1,106 @@
+# IWSLT 2026 Low-Resource ST — Training Hyperparameters
+
+paths:
+  data_root: "/workspace/data"
+  output_root: "/workspace/outputs"
+  model_cache: "/workspace/models"
+
+whisper:
+  model_name: "openai/whisper-large-v3"
+  lora:
+    rank: 128
+    alpha: 256
+    dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+      - "k_proj"
+      - "o_proj"
+      - "fc1"
+      - "fc2"
+  training:
+    learning_rate: 1.0e-4
+    warmup_steps: 500
+    max_steps: 5000  # Per language pair, adjusted by data size
+    per_device_train_batch_size: 8
+    gradient_accumulation_steps: 4  # Effective batch = 32
+    gradient_checkpointing: true
+    fp16: true
+    eval_steps: 500
+    save_steps: 500
+    logging_steps: 50
+    max_audio_length_sec: 30
+    dataloader_num_workers: 4
+  multitask:
+    asr_weight: 0.3
+    st_weight: 0.7
+  augmentation:
+    spec_augment: true
+    freq_mask_param: 27
+    time_mask_param: 100
+    num_freq_masks: 2
+    num_time_masks: 2
+    speed_perturbation: true
+    speed_factors: [0.9, 1.0, 1.1]
+    noise_injection: true
+    noise_snr_db: [10, 15, 20]
+
+seamless:
+  model_name: "facebook/seamless-m4t-v2-large"
+  lora:
+    rank: 64
+    alpha: 128
+    dropout: 0.05
+    target_modules:
+      - "q_proj"
+      - "v_proj"
+      - "k_proj"
+      - "out_proj"
+      - "fc1"
+      - "fc2"
+  training:
+    learning_rate: 5.0e-5
+    warmup_steps: 300
+    max_steps: 4000
+    per_device_train_batch_size: 4
+    gradient_accumulation_steps: 8  # Effective batch = 32
+    gradient_checkpointing: true
+    fp16: true
+    eval_steps: 400
+    save_steps: 400
+    logging_steps: 50
+    max_audio_length_sec: 30
+
+nllb:
+  model_name: "facebook/nllb-200-distilled-1.3B"
+  training:
+    learning_rate: 2.0e-5
+    warmup_steps: 200
+    num_epochs: 10
+    per_device_train_batch_size: 32
+    gradient_accumulation_steps: 2
+    fp16: true
+    max_source_length: 256
+    max_target_length: 256
+    eval_steps: 200
+    save_steps: 200
+  intra_distillation:
+    enabled: true
+    alpha: 0.5  # Weight for distillation loss
+    temperature: 2.0
+
+mbr:
+  num_hypotheses_per_system: 50
+  scoring_metric: "chrf"  # Options: chrf, comet, bleu
+  temperature: 1.0
+  num_beams: 5
+  num_return_sequences: 50
+
+evaluation:
+  lowercase: true
+  remove_punctuation: true
+  metrics:
+    - "bleu"
+    - "chrf"
+    - "comet"
+  comet_model: "Unbabel/wmt22-comet-da"
