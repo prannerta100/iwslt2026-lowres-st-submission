@@ -36,8 +36,8 @@ def main():
         train_cfg = yaml.safe_load(f)
 
     pair_id = args.pair
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
-    ensemble_dir = f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
+    ensemble_dir = os.path.expanduser(f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}")
 
     # Load references
     manifest_path = f"{data_dir}/{args.split}.jsonl"

@@ -113,7 +113,7 @@ language_pairs:
     data_hours: 20
     data_source: "huggingface"
     hf_dataset: "McGill-NLP/african_celtic_dataset"
-    hf_subset: "igbo"
+    hf_lang_filter: "igbo"
     github_url: null
     whisper_lang: "ig"
     seamless_src_lang: "ibo"
@@ -131,7 +131,7 @@ language_pairs:
     data_hours: 20
     data_source: "huggingface"
     hf_dataset: "McGill-NLP/african_celtic_dataset"
-    hf_subset: "hausa"
+    hf_lang_filter: "hausa"
     github_url: null
     whisper_lang: "ha"
     seamless_src_lang: "hau"
@@ -183,7 +183,7 @@ language_pairs:
     data_hours: 20
     data_source: "huggingface"
     hf_dataset: "McGill-NLP/african_celtic_dataset"
-    hf_subset: "yoruba"
+    hf_lang_filter: "yoruba"
     github_url: null
     whisper_lang: "yo"
     seamless_src_lang: "yor"

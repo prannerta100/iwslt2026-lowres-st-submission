@@ -40,11 +40,20 @@ class AudioAugmentor:
         factor = random.choice(self.speed_factors)
         if factor == 1.0:
             return waveform
-        effects = [["speed", str(factor)], ["rate", str(sample_rate)]]
-        augmented, _ = torchaudio.sox_effects.apply_effects_tensor(
-            waveform.unsqueeze(0), sample_rate, effects
-        )
-        return augmented.squeeze(0)
+        # Use torch-based resampling instead of sox (which requires libsox)
+        try:
+            orig_len = waveform.shape[-1]
+            new_len = int(orig_len / factor)
+            if waveform.dim() == 1:
+                waveform = waveform.unsqueeze(0)
+            resampled = torch.nn.functional.interpolate(
+                waveform.unsqueeze(0), size=new_len, mode='linear', align_corners=False
+            ).squeeze(0)
+            if resampled.shape[0] == 1:
+                resampled = resampled.squeeze(0)
+            return resampled
+        except Exception:
+            return waveform
 
     def _apply_noise(self, waveform: torch.Tensor) -> torch.Tensor:
         snr_db = random.choice(self.noise_snr_db)

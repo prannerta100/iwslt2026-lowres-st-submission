@@ -93,10 +93,10 @@ def main():
     scfg = train_cfg["seamless"]
     pair_id = args.pair
 
-    output_dir = args.output_dir or f"{train_cfg['paths']['output_root']}/seamless/{pair_id}"
+    output_dir = args.output_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/seamless/{pair_id}")
     os.makedirs(output_dir, exist_ok=True)
 
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
     train_manifest = f"{data_dir}/train.jsonl"
     dev_manifest = f"{data_dir}/dev.jsonl"
 
@@ -113,7 +113,7 @@ def main():
     print(f"  Output: {output_dir}")
 
     # Load model and processor
-    cache_dir = train_cfg["paths"]["model_cache"]
+    cache_dir = os.path.expanduser(train_cfg["paths"]["model_cache"])
     processor = AutoProcessor.from_pretrained(
         scfg["model_name"], cache_dir=cache_dir
     )
@@ -185,7 +185,7 @@ def main():
         learning_rate=t_cfg["learning_rate"],
         warmup_steps=t_cfg["warmup_steps"],
         fp16=t_cfg["fp16"],
-        eval_strategy="steps" if eval_dataset else "no",
+        evaluation_strategy="steps" if eval_dataset else "no",
         eval_steps=t_cfg["eval_steps"] if eval_dataset else None,
         save_steps=t_cfg["save_steps"],
         logging_steps=t_cfg["logging_steps"],

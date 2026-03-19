@@ -93,11 +93,11 @@ def main():
     pair_id = args.pair
 
     # Determine output directory
-    output_dir = args.output_dir or f"{train_cfg['paths']['output_root']}/whisper/{pair_id}"
+    output_dir = args.output_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/whisper/{pair_id}")
     os.makedirs(output_dir, exist_ok=True)
 
     # Data paths
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
     train_manifest = f"{data_dir}/train.jsonl"
     dev_manifest = f"{data_dir}/dev.jsonl"
 
@@ -117,19 +117,19 @@ def main():
     print(f"  Output: {output_dir}")
 
     # Load model and processor
-    cache_dir = train_cfg["paths"]["model_cache"]
+    cache_dir = os.path.expanduser(train_cfg["paths"]["model_cache"])
     processor = WhisperProcessor.from_pretrained(
         wcfg["model_name"], cache_dir=cache_dir
     )
+    # Load model in FP32 - LoRA needs FP32 params for gradient computation with mixed precision
     model = WhisperForConditionalGeneration.from_pretrained(
         wcfg["model_name"],
         cache_dir=cache_dir,
-        torch_dtype=torch.float16,
     )
 
-    # Enable gradient checkpointing
+    # Disable cache for training
     model.config.use_cache = False
-    model.gradient_checkpointing_enable()
+    # Note: gradient_checkpointing disabled - incompatible with PEFT for Whisper
 
     # Apply LoRA
     lora_cfg = wcfg["lora"]
@@ -142,6 +142,12 @@ def main():
     )
     model = get_peft_model(model, peft_config)
     model.print_trainable_parameters()
+    
+    # Override forward to handle Whisper's input_features (PEFT expects input_ids)
+    _original_forward = model.forward
+    def _whisper_forward(input_features=None, labels=None, **kwargs):
+        return model.get_base_model()(input_features=input_features, labels=labels, **kwargs)
+    model.forward = _whisper_forward
 
     # Setup augmentation
     aug_cfg = wcfg["augmentation"]
@@ -190,8 +196,9 @@ def main():
         gradient_accumulation_steps=t_cfg["gradient_accumulation_steps"],
         learning_rate=t_cfg["learning_rate"],
         warmup_steps=t_cfg["warmup_steps"],
-        fp16=t_cfg["fp16"],
-        eval_strategy="steps" if eval_dataset else "no",
+        fp16=False,  # Disabled - causes grad_norm=nan with inject_adapter_in_model
+        bf16=torch.cuda.is_bf16_supported(),  # Use bf16 if available for speed
+        evaluation_strategy="steps" if eval_dataset else "no",
         eval_steps=t_cfg["eval_steps"] if eval_dataset else None,
         save_steps=t_cfg["save_steps"],
         logging_steps=t_cfg["logging_steps"],
@@ -213,26 +220,26 @@ def main():
         language=whisper_lang or "en",
     )
 
-    # Trainer
+    # Trainer - model now has LoRA injected directly (no PEFT wrapper)
     trainer = Seq2SeqTrainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         data_collator=collator,
-        processing_class=processor.feature_extractor,
     )
 
-    # Train
     print(f"\nStarting training...")
     if args.resume_from:
         trainer.train(resume_from_checkpoint=args.resume_from)
     else:
         trainer.train()
 
-    # Save final model
+    # Save final model (full model with LoRA weights merged)
     final_dir = f"{output_dir}/final"
-    model.save_pretrained(final_dir)
+    os.makedirs(final_dir, exist_ok=True)
+    torch.save(model.state_dict(), f"{final_dir}/pytorch_model.bin")
+    model.config.save_pretrained(final_dir)
     processor.save_pretrained(final_dir)
 
     print(f"\nTraining complete. Model saved to: {final_dir}")

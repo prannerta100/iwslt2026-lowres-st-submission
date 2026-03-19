@@ -30,7 +30,7 @@ def main():
         train_cfg = yaml.safe_load(f)
 
     pair_id = args.pair
-    input_dir = args.input_dir or f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}"
+    input_dir = args.input_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}")
     output_dir = args.output_dir or input_dir
     split = args.split
 

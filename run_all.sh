@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euo pipefail
 
+# Load HF_TOKEN from bashrc
+source ~/.bashrc 2>/dev/null || true
+
 # ============================================================
 # IWSLT 2026 Low-Resource ST — Full Pipeline Orchestration
 # ============================================================
@@ -22,7 +25,7 @@ fi
 
 TEAM_NAME="${TEAM_NAME:-iwslt2026}"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-LOG_DIR="/workspace/outputs/logs/$TIMESTAMP"
+LOG_DIR="$HOME/workspace/outputs/logs/$TIMESTAMP"
 mkdir -p "$LOG_DIR"
 
 log() {
@@ -48,7 +51,7 @@ run_step() {
 # ============================================================
 # Phase 0: Setup (if not already done)
 # ============================================================
-if [ ! -d "/workspace/models" ] || [ -z "$(ls -A /workspace/models 2>/dev/null)" ]; then
+if [ ! -d "$HOME/workspace/models" ] || [ -z "$(ls -A $HOME/workspace/models 2>/dev/null)" ]; then
     log "=== Phase 0: Environment Setup ==="
     run_step "setup" bash setup.sh
 fi
@@ -64,8 +67,8 @@ run_step "preprocess_data" python scripts/preprocess.py --pairs $PAIRS
 # Verify data
 log "Data verification:"
 for pair in $PAIRS; do
-    if [ -f "/workspace/data/processed/$pair/train.jsonl" ]; then
-        count=$(wc -l < "/workspace/data/processed/$pair/train.jsonl")
+    if [ -f "$HOME/workspace/data/processed/$pair/train.jsonl" ]; then
+        count=$(wc -l < "$HOME/workspace/data/processed/$pair/train.jsonl")
         log "  $pair: $count training samples"
     else
         log "  $pair: WARNING - no training manifest found"
@@ -78,7 +81,7 @@ done
 log "=== Phase 2: Whisper LoRA MTL Fine-tuning ==="
 
 for pair in $PAIRS; do
-    if [ -f "/workspace/data/processed/$pair/train.jsonl" ]; then
+    if [ -f "$HOME/workspace/data/processed/$pair/train.jsonl" ]; then
         run_step "whisper_$pair" python scripts/train_whisper.py --pair "$pair"
     else
         log "  SKIP Whisper $pair: no training data"
@@ -91,7 +94,7 @@ done
 log "=== Phase 3: SeamlessM4T v2 LoRA Fine-tuning ==="
 
 for pair in $PAIRS; do
-    if [ -f "/workspace/data/processed/$pair/train.jsonl" ]; then
+    if [ -f "$HOME/workspace/data/processed/$pair/train.jsonl" ]; then
         run_step "seamless_$pair" python scripts/train_seamless.py --pair "$pair"
     else
         log "  SKIP SeamlessM4T $pair: no training data"
@@ -104,7 +107,7 @@ done
 log "=== Phase 4: NLLB Fine-tuning with Intra-Distillation ==="
 
 for pair in $PAIRS; do
-    if [ -f "/workspace/data/processed/$pair/train.jsonl" ]; then
+    if [ -f "$HOME/workspace/data/processed/$pair/train.jsonl" ]; then
         run_step "nllb_$pair" python scripts/train_nllb.py --pair "$pair"
     else
         log "  SKIP NLLB $pair: no training data"
@@ -118,7 +121,7 @@ log "=== Phase 5: Inference ==="
 
 for pair in $PAIRS; do
     for split in dev test; do
-        if [ -f "/workspace/data/processed/$pair/$split.jsonl" ]; then
+        if [ -f "$HOME/workspace/data/processed/$pair/$split.jsonl" ]; then
             run_step "cascade_${pair}_${split}" python scripts/inference_cascade.py \
                 --pair "$pair" --split "$split"
 
@@ -135,7 +138,7 @@ log "=== Phase 6: MBR Decoding ==="
 
 for pair in $PAIRS; do
     for split in dev test; do
-        ensemble_dir="/workspace/outputs/ensemble/$pair"
+        ensemble_dir="$HOME/workspace/outputs/ensemble/$pair"
         if [ -f "$ensemble_dir/cascade_nbest_${split}.json" ] || \
            [ -f "$ensemble_dir/e2e_nbest_${split}.json" ]; then
             run_step "mbr_${pair}_${split}" python scripts/mbr_decode.py \
@@ -150,7 +153,7 @@ done
 log "=== Phase 7: Evaluation ==="
 
 for pair in $PAIRS; do
-    if [ -f "/workspace/data/processed/$pair/dev.jsonl" ]; then
+    if [ -f "$HOME/workspace/data/processed/$pair/dev.jsonl" ]; then
         run_step "eval_${pair}" python scripts/evaluate.py \
             --pair "$pair" --split dev --all
     fi
@@ -172,15 +175,15 @@ log "============================================================"
 log "PIPELINE COMPLETE"
 log "============================================================"
 log ""
-log "Submission files: /workspace/outputs/submissions/"
-log "Evaluation results: /workspace/outputs/ensemble/*/eval_results_dev.json"
+log "Submission files: $HOME/workspace/outputs/submissions/"
+log "Evaluation results: $HOME/workspace/outputs/ensemble/*/eval_results_dev.json"
 log "Logs: $LOG_DIR/"
 log ""
 
 # Print eval results summary
 log "=== Results Summary ==="
 for pair in $PAIRS; do
-    results_file="/workspace/outputs/ensemble/$pair/eval_results_dev.json"
+    results_file="$HOME/workspace/outputs/ensemble/$pair/eval_results_dev.json"
     if [ -f "$results_file" ]; then
         log "  $pair:"
         python3 -c "
@@ -200,5 +203,5 @@ done
 
 log ""
 log "Disk usage:"
-du -sh /workspace/data/ /workspace/outputs/ /workspace/models/ 2>/dev/null || true
-df -h /workspace 2>/dev/null || true
+du -sh $HOME/workspace/data/ $HOME/workspace/outputs/ $HOME/workspace/models/ 2>/dev/null || true
+df -h $HOME/workspace 2>/dev/null || true

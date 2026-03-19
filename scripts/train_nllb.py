@@ -98,10 +98,10 @@ def main():
               "Will attempt fine-tuning with a placeholder language code.")
         nllb_src = "eng_Latn"  # placeholder, will be overridden by fine-tuning
 
-    output_dir = args.output_dir or f"{train_cfg['paths']['output_root']}/nllb/{pair_id}"
+    output_dir = args.output_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/nllb/{pair_id}")
     os.makedirs(output_dir, exist_ok=True)
 
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
     train_manifest = f"{data_dir}/train.jsonl"
     dev_manifest = f"{data_dir}/dev.jsonl"
 
@@ -115,7 +115,7 @@ def main():
     print(f"  Intra-distillation: {ncfg['intra_distillation']['enabled']}")
     print(f"  Output: {output_dir}")
 
-    cache_dir = train_cfg["paths"]["model_cache"]
+    cache_dir = os.path.expanduser(train_cfg["paths"]["model_cache"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load tokenizer

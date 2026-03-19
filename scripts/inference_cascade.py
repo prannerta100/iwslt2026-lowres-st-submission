@@ -208,11 +208,11 @@ def main():
 
     pair_id = args.pair
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    output_dir = args.output_dir or f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}"
+    output_dir = args.output_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}")
     os.makedirs(output_dir, exist_ok=True)
 
     # Load test manifest
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
     manifest_path = f"{data_dir}/{args.split}.jsonl"
     entries = STManifest.load(manifest_path)
     audio_paths = [e["audio_path"] for e in entries]
@@ -221,9 +221,9 @@ def main():
     print(f"Cascaded inference: {pair_id} ({len(entries)} utterances)")
 
     # --- Step 1: Whisper ASR ---
-    cache_dir = train_cfg["paths"]["model_cache"]
+    cache_dir = os.path.expanduser(train_cfg["paths"]["model_cache"])
     wcfg = train_cfg["whisper"]
-    whisper_dir = args.whisper_model_dir or f"{train_cfg['paths']['output_root']}/whisper/{pair_id}/final"
+    whisper_dir = args.whisper_model_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/whisper/{pair_id}/final")
 
     print(f"\nLoading Whisper from: {whisper_dir}")
     processor = WhisperProcessor.from_pretrained(wcfg["model_name"], cache_dir=cache_dir)
@@ -270,10 +270,10 @@ def main():
 
     if nllb_src:
         ncfg = train_cfg["nllb"]
-        nllb_dir = args.nllb_model_dir or f"{train_cfg['paths']['output_root']}/nllb/{pair_id}/best"
+        nllb_dir = args.nllb_model_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/nllb/{pair_id}/best")
 
         if not os.path.exists(nllb_dir):
-            nllb_dir = f"{train_cfg['paths']['output_root']}/nllb/{pair_id}/final"
+            nllb_dir = os.path.expanduser(f"{train_cfg['paths']['output_root']}/nllb/{pair_id}/final")
 
         print(f"\nLoading NLLB from: {nllb_dir}")
         nllb_tokenizer = AutoTokenizer.from_pretrained(nllb_dir)

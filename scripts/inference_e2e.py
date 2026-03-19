@@ -128,10 +128,10 @@ def main():
 
     pair_id = args.pair
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    output_dir = args.output_dir or f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}"
+    output_dir = args.output_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}")
     os.makedirs(output_dir, exist_ok=True)
 
-    data_dir = f"{train_cfg['paths']['data_root']}/processed/{pair_id}"
+    data_dir = os.path.expanduser(f"{train_cfg['paths']['data_root']}/processed/{pair_id}")
     manifest_path = f"{data_dir}/{args.split}.jsonl"
     entries = STManifest.load(manifest_path)
     audio_paths = [e["audio_path"] for e in entries]
@@ -144,9 +144,9 @@ def main():
     print(f"  {src_lang} -> {tgt_lang}")
 
     # Load model
-    cache_dir = train_cfg["paths"]["model_cache"]
+    cache_dir = os.path.expanduser(train_cfg["paths"]["model_cache"])
     scfg = train_cfg["seamless"]
-    model_dir = args.model_dir or f"{train_cfg['paths']['output_root']}/seamless/{pair_id}/final"
+    model_dir = args.model_dir or os.path.expanduser(f"{train_cfg['paths']['output_root']}/seamless/{pair_id}/final")
 
     print(f"\nLoading SeamlessM4T from: {model_dir}")
     processor = AutoProcessor.from_pretrained(scfg["model_name"], cache_dir=cache_dir)

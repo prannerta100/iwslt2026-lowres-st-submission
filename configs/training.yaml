@@ -1,23 +1,19 @@
 # IWSLT 2026 Low-Resource ST — Training Hyperparameters
 
 paths:
-  data_root: "/workspace/data"
-  output_root: "/workspace/outputs"
-  model_cache: "/workspace/models"
+  data_root: "~/workspace/data"
+  output_root: "~/workspace/outputs"
+  model_cache: "~/workspace/models"
 
 whisper:
   model_name: "openai/whisper-large-v3"
   lora:
-    rank: 128
-    alpha: 256
+    rank: 32
+    alpha: 64
     dropout: 0.05
     target_modules:
       - "q_proj"
       - "v_proj"
-      - "k_proj"
-      - "o_proj"
-      - "fc1"
-      - "fc2"
   training:
     learning_rate: 1.0e-4
     warmup_steps: 500

@@ -13,9 +13,20 @@ import sys
 from pathlib import Path
 
 import yaml
+from datasets import load_dataset
+from huggingface_hub import login
 
-RAW_DIR = "/workspace/data/raw"
-PROCESSED_DIR = "/workspace/data/processed"
+# Try to login with HF_TOKEN if available
+hf_token = os.environ.get("HF_TOKEN")
+if hf_token:
+    try:
+        login(token=hf_token, add_to_git_credential=False)
+        print("Logged in to HuggingFace Hub")
+    except Exception as e:
+        print(f"Warning: Could not login to HuggingFace: {e}")
+
+RAW_DIR = os.path.expanduser("~/workspace/data/raw")
+PROCESSED_DIR = os.path.expanduser("~/workspace/data/processed")
 
 
 def run_cmd(cmd, cwd=None):
@@ -29,32 +40,41 @@ def run_cmd(cmd, cwd=None):
 def download_hf_dataset(pair_id, cfg):
     """Download from HuggingFace using datasets library."""
     out_dir = f"{RAW_DIR}/{pair_id}"
+    cache_dir = f"{out_dir}/cache"
     os.makedirs(out_dir, exist_ok=True)
 
     dataset_name = cfg["hf_dataset"]
     subset = cfg.get("hf_subset")
+    lang_filter = cfg.get("hf_lang_filter")
 
-    print(f"  Downloading HF dataset: {dataset_name} (subset={subset})")
+    print(f"  Downloading HF dataset: {dataset_name} (subset={subset}, lang_filter={lang_filter})")
 
-    script = f"""
-import os, json
-from datasets import load_dataset
+    try:
+        if subset:
+            ds = load_dataset(dataset_name, subset, cache_dir=cache_dir)
+        else:
+            ds = load_dataset(dataset_name, cache_dir=cache_dir)
+        
+        # Filter by language if specified
+        if lang_filter:
+            print(f"  Filtering by language: {lang_filter}")
+            ds = ds.filter(lambda x: x.get("language", "").lower() == lang_filter.lower())
+        
+        print(f"  Dataset loaded. Splits: {list(ds.keys())}")
 
-ds = load_dataset("{dataset_name}"{f', "{subset}"' if subset else ''}, cache_dir="{out_dir}/cache")
-print("Dataset loaded. Splits:", list(ds.keys()))
+        # Save info
+        with open(f"{out_dir}/info.json", "w") as f:
+            json.dump({"splits": list(ds.keys()), "num_rows": {k: len(v) for k, v in ds.items()}}, f)
 
-# Save info
-with open("{out_dir}/info.json", "w") as f:
-    json.dump({{"splits": list(ds.keys()), "num_rows": {{k: len(v) for k, v in ds.items()}}}}, f)
-
-# Save each split
-for split_name, split_data in ds.items():
-    split_dir = f"{out_dir}/{{split_name}}"
-    os.makedirs(split_dir, exist_ok=True)
-    split_data.save_to_disk(split_dir)
-    print(f"  Saved {{split_name}}: {{len(split_data)}} examples")
-"""
-    run_cmd(f'python3 -c "{script}"')
+        # Save each split
+        for split_name, split_data in ds.items():
+            split_dir = f"{out_dir}/{split_name}"
+            os.makedirs(split_dir, exist_ok=True)
+            split_data.save_to_disk(split_dir)
+            print(f"    Saved {split_name}: {len(split_data)} examples")
+    except Exception as e:
+        print(f"  ERROR downloading HF dataset: {e}")
+    
     return out_dir
 
 

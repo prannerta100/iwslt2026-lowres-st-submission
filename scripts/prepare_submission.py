@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--team_name", required=True)
     parser.add_argument("--config", default="configs/training.yaml")
     parser.add_argument("--lang_config", default="configs/language_pairs.yaml")
-    parser.add_argument("--output_dir", default="/workspace/outputs/submissions")
+    parser.add_argument("--output_dir", default=os.path.expanduser("~/workspace/outputs/submissions"))
     parser.add_argument("--pairs", nargs="*", help="Specific pairs (default: all)")
     args = parser.parse_args()
 
@@ -35,7 +35,7 @@ def main():
     submitted = []
 
     for pair_id, cfg in pairs.items():
-        ensemble_dir = f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}"
+        ensemble_dir = os.path.expanduser(f"{train_cfg['paths']['output_root']}/ensemble/{pair_id}")
 
         # Primary: MBR ensemble
         mbr_file = f"{ensemble_dir}/mbr_test.txt"
